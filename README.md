@@ -1,6 +1,9 @@
+
+![Starting_soon_Screen_13](https://github.com/user-attachments/assets/d648675e-4f85-4215-abe4-46311e54b09a)
+
 # Hackathon Core API Documentation
 
-This document provides API documentation for interacting with the Weather API.
+This document provides API documentation for interacting with the Lonelist Team Core API.
 
 **Base URL:** `https://core-api-xurt.onrender.com`
 
