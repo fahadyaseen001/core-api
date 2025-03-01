@@ -3,7 +3,7 @@
 
 # Hackathon Core API Documentation
 
-This document provides API documentation for interacting with the Weather API.
+This document provides API documentation for interacting with the Lonelist Team Core API.
 
 **Base URL:** `https://core-api-xurt.onrender.com`
 
