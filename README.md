@@ -51,3 +51,20 @@ This document provides API documentation for interacting with the Weather API.
   "rtt": 150             
 }
 ```
+
+#### 4. Network Problem Diagnosis Chatbot (`/chatbot`)
+- **Endpoint:** `/chatbot`
+- **Method:** `POST`
+- **Description:** This endpoint provides a chatbot interface powered by `DeepSeek R1` to assist with network problem diagnosis. It takes a user's text prompt and returns a chatbot response aimed at troubleshooting network issues.
+#### Request Body (`application/json`)
+```json
+{
+    "prompt": "We have a connection problem in our hospital, the network is very slow."
+}
+```
+#### Response Body (`application/json`)
+```json
+{
+    "response": "Thanks for reaching out! I understand you are experiencing network issues..."
+}
+```
