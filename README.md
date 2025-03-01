@@ -55,7 +55,7 @@ This document provides API documentation for interacting with the Lonelist Team 
 }
 ```
 
-#### 4. Network Problem Diagnosis Chatbot (`/chatbot`)
+### 4. Network Problem Diagnosis Chatbot (`/chatbot`)
 - **Endpoint:** `/chatbot`
 - **Method:** `POST`
 - **Description:** This endpoint provides a chatbot interface powered by `DeepSeek R1` to assist with network problem diagnosis. It takes a user's text prompt and returns a chatbot response aimed at troubleshooting network issues.
