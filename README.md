@@ -131,3 +131,149 @@ This document provides API documentation for interacting with the Lonelist Team 
  { "... (up to 5 document entries) ..." },
 ]
 ```
+
+### 7. Retrieve List of Schools with Problem Details (`/schools-list`)
+
+-   **Endpoint:** `/schools-list`
+-   **Method:** `GET`
+-   **Description:** Retrieves a list of schools with details about any current network/infrastructure problems they are facing.
+
+#### Response Body (`application/json`)
+
+```json
+{
+  "total_schools": 5,
+  "schools": [
+    {
+      "school_id": "uuid-of-school-1",
+      "school_name": "Springfield Elementary",
+      "school_location": {
+        "location_id": "34.0522_-118.2437"
+      },
+      "school_region": "Central",
+      "type_of_problem": "Network Outage",
+      "duration": "1 day",
+      "severity": "Medium",
+      "last_updated": "2024-03-02T18:03:01.294937+00:00"
+    },
+    {
+      "school_id": "uuid-of-school-2",
+      "school_name": "Northwood High",
+      "school_location": {
+        "location_id": "34.0689_-118.1554"
+      },
+      "school_region": "North",
+      "type_of_problem": "Power Fluctuation",
+      "duration": "4 hours",
+      "severity": "Low",
+      "last_updated": "2024-03-02T19:03:01.294937+00:00"
+    },
+    {
+      "...": "..."
+    }
+  ]
+}
+```
+
+### 8. Upload Coursework Document (`/documents/upload`)
+- **Endpoint:**` /documents/upload`
+- **Method:** `POST`
+- **Description:** Uploads a new coursework document to Supabase Storage and saves its metadata to the database.
+- **Request Body:** (`multipart/form-data`)
+#### Form Data Fields:
+- **title (text):** Required. Title of the coursework document.
+- **user_id** (text, optional): User ID who is uploading the document (optional).
+- **document_file (file):** Required. The file to upload.
+#### Response Body (`application/json`)
+```json
+
+{
+  "id": "uuid-of-uploaded-document",
+  "filename": "uploaded_document_name.pdf",
+  "storage_path": "coursework/uuid_uploaded_document_name.pdf",
+  "title": "Document Title Provided",
+  "user_id": "optional-uuid-string",
+  "content_type": "application/pdf",
+  "file_size": 12345,
+  "uploaded_at": "2024-03-02T19:30:00.123456+00:00"
+}
+```
+
+### 9. Generate System Alerts (`/system-alerts`)
+- **Endpoint:** `/system-alerts`
+- **Method:** `POST`
+- **Description:** Generates system alerts based on weather data, network performance, and predicted internet outage probability for a given location.
+#### Request Body (`application/json`)
+```json
+{
+  "lat": 40.7128,
+  "lon": -74.0060,
+  "downlink": 8.5,
+  "rtt": 100
+}
+
+```
+#### Response Body (`application/json`)
+```json
+
+[
+  {
+    "id": "uuid-of-alert-1",
+    "title": "High Internet Outage Risk Predicted",
+    "description": "High internet outage probability predicted due to weather conditions. Consider taking preventative measures.",
+    "alert_type": "outage",
+    "severity": "high",
+    "location_id": "34.0522_-118.2437",
+    "created_at": "2024-03-02T20:00:00.123456+00:00"
+  },
+  {
+    "id": "uuid-of-alert-2",
+    "title": "High Wind Warning",
+    "description": "Maximum wind speed today may reach 70 m/s. Expect potential disruptions.",
+    "alert_type": "weather",
+    "severity": "medium",
+    "location_id": "34.0522_-118.2437",
+    "created_at": "2024-03-02T20:00:00.123456+00:00"
+  },
+  {
+    "...": "..."
+  }
+]
+
+```
+
+### 10. Retrieve List of System Alerts (`/system-alerts-list`)
+- **Endpoint:** `/system-alerts-list`
+- **Method:**` GET`
+- **Description:** Retrieves a list of system alerts from the database, ordered by creation time (newest first).
+#### Response Body (`application/json`)
+
+```json
+
+{
+  "alerts": [
+    {
+      "id": "uuid-of-alert-1",
+      "title": "Network priority changed",
+      "description": "Over the next 24 hours, the network will only prioritize essential content. Critical systems will remain operational.",
+      "alert_type": "network",
+      "severity": "medium",
+      "location_id": null,
+      "created_at": "2024-03-02T20:15:00.123456+00:00"
+    },
+    {
+      "id": "uuid-of-alert-2",
+      "title": "Alternative systems ready",
+      "description": "Offline mode is set up and ready to use. Log in from the main application by selecting \"Offline Mode\".",
+      "alert_type": "system",
+      "severity": "low",
+      "location_id": null,
+      "created_at": "2024-03-02T20:10:00.123456+00:00"
+    },
+    {
+      "...": "..."
+    }
+  ],
+  "total_alerts": 4
+}
+```
