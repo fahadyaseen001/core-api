@@ -25,16 +25,15 @@ logger = logging.getLogger(__name__)
 # Environment variables
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")  # Add Hugging Face API Key
+TOGETHER_AI_API_KEY = os.getenv("TOGETHER_AI_API_KEY") # Renamed to TOGETHER_AI_API_KEY
 
 # Check for required environment variables
 if not SUPABASE_URL:
     raise Exception("SUPABASE_URL environment variable is not set.")
 if not SUPABASE_KEY:
     raise Exception("SUPABASE_KEY environment variable is not set.")
-if not HUGGINGFACE_API_KEY:
-    raise Exception("HUGGINGFACE_API_KEY environment variable is not set.") # Check for HF API Key
-
+if not TOGETHER_AI_API_KEY: # Check for TOGETHER_AI_API_KEY
+    raise Exception("TOGETHER_AI_API_KEY environment variable is not set.") # Check for TOGETHER_AI_API_KEY
 
 # Initialize FastAPI app
 app = FastAPI(title="Weather API Backend")
@@ -55,19 +54,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Hugging Face Inference Client
-try:
-    hf_client = InferenceClient(
-        provider="together",
-        api_key=HUGGINGFACE_API_KEY
-    )
-    logger.info("Hugging Face Inference Client initialized successfully.")
-except Exception as e:
-    logger.error(f"Error initializing Hugging Face Inference Client: {e}")
-    # It's crucial to handle initialization errors gracefully.
-    # Consider raising an exception or disabling chatbot functionality if initialization fails.
-    # For now, we'll log the error, but the app will still try to start (chatbot endpoint might not work).
-
+# Initialize Together AI Client - No need for explicit client, using httpx directly for now
+logger.info("Together AI will be used for chatbot functionality.")
 
 # Simplified model
 class LocationCoordinates(BaseModel):
@@ -545,38 +533,56 @@ async def get_outage_prediction_rule_based(coords: LocationCoordinates):
         logger.error(f"Error predicting outage probability (rule-based): {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error predicting outage probability: {str(e)}")
 
-# Chatbot Endpoint
+@app.post("/chatbot", description="Chatbot endpoint for network problem diagnosis")
 @app.post("/chatbot", description="Chatbot endpoint for network problem diagnosis")
 async def chatbot_endpoint(request: ChatbotRequest):
-    """Endpoint to interact with the DeepSeek R1 chatbot for network problem diagnosis."""
+    """Endpoint to interact with the DeepSeek R1 chatbot for network problem diagnosis using Together AI."""
     try:
-        if not hf_client: # Check if client initialized properly
-            raise HTTPException(status_code=500, detail="Chatbot service unavailable. Inference Client initialization failed.")
-
+        # No need to check hf_client anymore
         user_prompt = request.prompt
-
-        # System prompt to guide DeepSeek R1 for network diagnosis - You can refine this further!
+        # System prompt to guide chatbot for network diagnosis
         system_prompt = """You are a highly intelligent AI assistant specializing in diagnosing and solving network problems in a hospital environment.
         Your goal is to help users troubleshoot network issues.
         Ask clarifying questions to understand the problem, consider any information provided, and suggest logical, step-by-step troubleshooting actions.
         Focus on accuracy and providing helpful, practical advice related to network connectivity, router issues, and common hospital network scenarios.
         When a user provides an image (or says they have), acknowledge it and ask them to describe visual details relevant to the network problem."""
 
-
         messages = [
             {"role": "system", "content": system_prompt}, # System prompt for context
-            {"role": "user", "content": user_prompt}      # User's prompt
+            {"role": "user", "content": user_prompt}    # User's prompt
         ]
 
-        completion = hf_client.chat.completions.create(
-            model="deepseek-ai/DeepSeek-R1",
-            messages=messages,
-            max_tokens=5000, # Increase max tokens for longer responses
-            temperature=0.1, # Lower temperature for more deterministic responses
-        )
+        api_url = "https://api.together.xyz/v1/chat/completions" # Together AI endpoint
+        headers = {
+            "Authorization": f"Bearer {TOGETHER_AI_API_KEY}", # Use Together AI API Key
+            "Content-Type": "application/json"
+        }
 
-        response_text = completion.choices[0].message.content
-        # **Cleaning the response: Remove the <think> block**
+        data = {
+            "model": "deepseek-ai/DeepSeek-R1", # Or choose a different model available on Together AI
+            "messages": messages,
+            "max_tokens": 5000, # Set max tokens as before
+            "temperature": 0.1 # Set temperature as before
+        }
+
+        async with httpx.AsyncClient(timeout=30.0) as client: # Increased timeout to 30 seconds
+            response = await client.post(api_url, headers=headers, json=data)
+            if response.status_code != 200: # Together AI returns 200 on success
+                logger.error(f"Together AI error: {response.status_code}, {response.text}")
+                raise HTTPException(status_code=response.status_code, detail="Error communicating with chatbot service")
+
+            response_data = response.json()
+
+            # Extract response from Together AI format
+            response_text = ""
+            if "choices" in response_data and response_data["choices"]:
+                response_text = response_data["choices"][0]["message"]["content"]
+            else:
+                logger.warning(f"Unexpected response format from Together AI: {response_data}")
+                response_text = "Sorry, I encountered an issue processing your request."
+
+
+        # **Cleaning the response: Remove the <think> block** - Keep cleaning logic as is if needed
         if "<think>" in response_text and "</think>" in response_text:
             start_index = response_text.find("</think>") + len("</think>")
             cleaned_response = response_text[start_index:].strip()
@@ -585,12 +591,12 @@ async def chatbot_endpoint(request: ChatbotRequest):
 
         return {"response": cleaned_response}
 
-    except HTTPException: # Re-raise HTTPExceptions directly
+    except HTTPException as e: # Re-raise HTTPExceptions directly
         raise
     except Exception as e: # Catch other exceptions and return as HTTP 500
         logger.error(f"Chatbot error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Chatbot service error: {str(e)}")
-
+    
 #  Document Retrieval Endpoint
 @app.get("/documents/high-priority-docs", description="Retrieve the top 5 coursework documents based on priority with estimated download time")
 async def retrieve_top_documents(
