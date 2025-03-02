@@ -14,6 +14,7 @@ from datetime import datetime, timedelta # Import timedelta for date comparisons
 from typing import List, Dict
 from fastapi.middleware.cors import CORSMiddleware
 
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -53,7 +54,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # Initialize Hugging Face Inference Client
 try:
@@ -545,7 +545,51 @@ async def get_outage_prediction_rule_based(coords: LocationCoordinates):
         logger.error(f"Error predicting outage probability (rule-based): {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error predicting outage probability: {str(e)}")
 
+# Chatbot Endpoint
+@app.post("/chatbot", description="Chatbot endpoint for network problem diagnosis")
+async def chatbot_endpoint(request: ChatbotRequest):
+    """Endpoint to interact with the DeepSeek R1 chatbot for network problem diagnosis."""
+    try:
+        if not hf_client: # Check if client initialized properly
+            raise HTTPException(status_code=500, detail="Chatbot service unavailable. Inference Client initialization failed.")
 
+        user_prompt = request.prompt
+
+        # System prompt to guide DeepSeek R1 for network diagnosis - You can refine this further!
+        system_prompt = """You are a highly intelligent AI assistant specializing in diagnosing and solving network problems in a hospital environment.
+        Your goal is to help users troubleshoot network issues.
+        Ask clarifying questions to understand the problem, consider any information provided, and suggest logical, step-by-step troubleshooting actions.
+        Focus on accuracy and providing helpful, practical advice related to network connectivity, router issues, and common hospital network scenarios.
+        When a user provides an image (or says they have), acknowledge it and ask them to describe visual details relevant to the network problem."""
+
+
+        messages = [
+            {"role": "system", "content": system_prompt}, # System prompt for context
+            {"role": "user", "content": user_prompt}      # User's prompt
+        ]
+
+        completion = hf_client.chat.completions.create(
+            model="deepseek-ai/DeepSeek-R1",
+            messages=messages,
+            max_tokens=5000, # Increase max tokens for longer responses
+            temperature=0.1, # Lower temperature for more deterministic responses
+        )
+
+        response_text = completion.choices[0].message.content
+        # **Cleaning the response: Remove the <think> block**
+        if "<think>" in response_text and "</think>" in response_text:
+            start_index = response_text.find("</think>") + len("</think>")
+            cleaned_response = response_text[start_index:].strip()
+        else:
+            cleaned_response = response_text
+
+        return {"response": cleaned_response}
+
+    except HTTPException: # Re-raise HTTPExceptions directly
+        raise
+    except Exception as e: # Catch other exceptions and return as HTTP 500
+        logger.error(f"Chatbot error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Chatbot service error: {str(e)}")
 
 #  Document Retrieval Endpoint
 @app.get("/documents/high-priority-docs", description="Retrieve the top 5 coursework documents based on priority with estimated download time")
