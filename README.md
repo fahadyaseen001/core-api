@@ -54,7 +54,15 @@ This document provides API documentation for interacting with the Lonelist Team 
   "rtt": 150             
 }
 ```
+#### Response Body (`application/json`)
 
+```json
+
+{
+    "outage_probability": "Low",
+    "reasoning": "No specific rule triggered - Low Probability (Default)"
+}
+```
 ### 4. Network Problem Diagnosis Chatbot (`/chatbot`)
 - **Endpoint:** `/chatbot`
 - **Method:** `POST`
