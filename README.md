@@ -21,7 +21,7 @@ This document provides API documentation for interacting with the Lonelist Team 
 {
   "lat": 40.7128,        
   "lon": -74.0060,      
-  "user_id": "optional-uuid-string", 
+  "user_id": "optional-uuid-string", // optional
   "forecast_days": 7,   
   "timezone": "auto",   
   "effective_type": "4g",
@@ -29,6 +29,23 @@ This document provides API documentation for interacting with the Lonelist Team 
   "rtt": 50              
 }
 ```
+
+#### Response Body (`application/json`)
+
+```json
+
+{
+  "message": "Weather data fetched and stored successfully",
+  "location_id": "40.7128_-74.0060",
+  "stored_data_details": {
+    "latitude": 40.7128,
+    "longitude": -74.0060,
+    "forecast_days": 7
+  }
+}
+
+```
+
 ### 2. Retrieve Stored Weather Data for a Location (`/weather/{location_id}`)
 - **Endpoint:** `/weather/{location_id}`
 - **Method:** `GET`
@@ -36,6 +53,100 @@ This document provides API documentation for interacting with the Lonelist Team 
 
 #### Path Parameters
 - `location_id` (string): Required. The unique identifier of the location for which to retrieve weather data. This`location_id` is returned in the response of the `/weather` endpoint.
+
+#### Request Body (`application/json`)
+
+
+```json
+{
+  "location_id": "40.7128_-74.0060",
+  "weather_data": {
+    "current": {
+      "dt": 1709474400,
+      "temp": 10.2,
+      "feels_like": 9.5,
+      "humidity": 67,
+      "pressure": 1017,
+      "wind_speed": 11.2,
+      "wind_direction": 240,
+      "weather_code": 3,
+      "is_day": 1,
+      "visibility": 10,
+      "uv_index": 3,
+      "location_id": "40.7128_-74.0060"
+    },
+    "hourly": [
+      {
+        "dt": 1709474400,
+        "temp": 10.2,
+        "feels_like": 9.5,
+        "humidity": 67,
+        "pressure": 1017,
+        "wind_speed": 11.2,
+        "wind_direction": 240,
+        "wind_gusts": 15.8,
+        "precipitation": 0.0,
+        "snowfall": 0.0,
+        "weather_code": 3,
+        "cloud_cover": 75,
+        "cloud_cover_low": 75,
+        "cloud_cover_mid": 0,
+        "cloud_cover_high": 0,
+        "visibility": 10,
+        "is_day": 1,
+        "snow_depth": 0,
+        "location_id": "40.7128_-74.0060"
+      },
+      {
+        "dt": 1709478000,
+        "temp": 9.8,
+        "feels_like": 9.1,
+        "humidity": 69,
+        "pressure": 1017,
+        "wind_speed": 10.8,
+        "wind_direction": 241,
+        "wind_gusts": 15.1,
+        "precipitation": 0.0,
+        "snowfall": 0.0,
+        "weather_code": 3,
+        "cloud_cover": 74,
+        "cloud_cover_low": 74,
+        "cloud_cover_mid": 0,
+        "cloud_cover_high": 0,
+        "visibility": 10,
+        "is_day": 1,
+        "snow_depth": 0,
+        "location_id": "40.7128_-74.0060"
+      },
+      // ... (rest of hourly data) ...
+    ],
+    "daily": [
+      {
+        "dt": 1709443200,
+        "temperature_max": 12.5,
+        "temperature_min": 7.8,
+        "apparent_temperature_max": 11.8,
+        "apparent_temperature_min": 6.9,
+        "precipitation_sum": 0.0,
+        "rain_sum": 0.0,
+        "showers_sum": 0.0,
+        "snowfall_sum": 0.0,
+        "precipitation_hours": 0.0,
+        "precipitation_probability_max": 2,
+        "weather_code": 1,
+        "sunrise": 1709468182,
+        "sunset": 1709508231,
+        "wind_speed_max": 17.3,
+        "wind_gusts_max": 24.5,
+        "wind_direction_dominant": 255,
+        "uv_index_max": 4,
+        "location_id": "40.7128_-74.0060"
+      },
+      // ... (rest of daily data) ...
+    ]
+  }
+}
+```
 
 ### 3. Predict Internet Outage Probability (Rule-Based) (`/predict-outage-rule-based`)
 
@@ -192,6 +303,7 @@ This document provides API documentation for interacting with the Lonelist Team 
 - **title (text):** Required. Title of the coursework document.
 - **user_id** (text, optional): User ID who is uploading the document (optional).
 - **document_file (file):** Required. The file to upload.
+
 #### Response Body (`application/json`)
 ```json
 
@@ -211,6 +323,7 @@ This document provides API documentation for interacting with the Lonelist Team 
 - **Endpoint:** `/system-alerts`
 - **Method:** `POST`
 - **Description:** Generates system alerts based on weather data, network performance, and predicted internet outage probability for a given location.
+
 #### Request Body (`application/json`)
 ```json
 {
@@ -254,6 +367,7 @@ This document provides API documentation for interacting with the Lonelist Team 
 - **Endpoint:** `/system-alerts-list`
 - **Method:**` GET`
 - **Description:** Retrieves a list of system alerts from the database, ordered by creation time (newest first).
+
 #### Response Body (`application/json`)
 
 ```json
